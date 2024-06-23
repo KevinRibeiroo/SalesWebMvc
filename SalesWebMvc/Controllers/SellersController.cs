@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -50,12 +51,12 @@ namespace SalesWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return ValidateIdNotProvided();
             }
             var seller = _sellerService.GetSellerById(id.Value);
 
             if (seller == null)
-               return NotFound();
+                return ValidateIdNotFound();
 
             return View(seller);
         }
@@ -71,12 +72,12 @@ namespace SalesWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return ValidateIdNotProvided();
             }
             var seller = _sellerService.GetSellerById(id);
 
             if (seller == null)
-                return NotFound();
+                return ValidateIdNotFound();
 
             return View(seller);
         }
@@ -85,7 +86,7 @@ namespace SalesWebMvc.Controllers
         {
             if (id == null)
             {
-                return NotFound();
+                return ValidateIdNotProvided();
             }
             var seller = _sellerService.GetSellerById(id.Value);
             var listDepartament = _departamentService.GetAllDepartament();
@@ -96,18 +97,19 @@ namespace SalesWebMvc.Controllers
             };
 
             if (seller == null)
-                return NotFound();
+                return ValidateIdNotFound();
 
             return View(viewModel);
         }
         [HttpPost, ValidateAntiForgeryToken]
         public IActionResult Edit(Seller seller, int? id)
         {
-            if ( seller == null)
+
+            if (id != seller.Id)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = "Id mismatch" });
             }
-            
+
             try
             {
                 _sellerService.UpdateSeller(seller);
@@ -116,8 +118,27 @@ namespace SalesWebMvc.Controllers
             }
             catch (ApplicationException ex)
             {
-                return BadRequest(ex.Message);
+                return RedirectToAction(nameof(Error), new { message = ex.Message });
             }
+        }
+        public IActionResult Error(string? message)
+        {
+            ErrorViewModel errorView = new ErrorViewModel()
+            {
+                Message = message,
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            };
+
+            return View(errorView); 
+        }
+
+        private IActionResult ValidateIdNotProvided()
+        {
+           return RedirectToAction(nameof(Error), new {message = "Id not provided" });
+        }
+        private IActionResult ValidateIdNotFound()
+        {
+            return RedirectToAction(nameof(Error), new { message = "Id not found" });
         }
     }
 }
