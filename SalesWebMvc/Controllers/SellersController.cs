@@ -53,6 +53,10 @@ namespace SalesWebMvc.Controllers
                 return NotFound();
             }
             var seller = _sellerService.GetSellerById(id.Value);
+
+            if (seller == null)
+               return NotFound();
+
             return View(seller);
         }
 
@@ -61,6 +65,59 @@ namespace SalesWebMvc.Controllers
         {
             _sellerService.RemoveSeller(id);
             return RedirectToAction(nameof(Index));
+        }
+
+        public IActionResult Details(int id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            var seller = _sellerService.GetSellerById(id);
+
+            if (seller == null)
+                return NotFound();
+
+            return View(seller);
+        }
+
+        public IActionResult Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+            var seller = _sellerService.GetSellerById(id.Value);
+            var listDepartament = _departamentService.GetAllDepartament();
+            var viewModel = new SellerFormViewModel()
+            {
+                Departaments = listDepartament,
+                Seller = seller
+            };
+
+            if (seller == null)
+                return NotFound();
+
+            return View(viewModel);
+        }
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult Edit(Seller seller, int? id)
+        {
+            if ( seller == null)
+            {
+                return NotFound();
+            }
+            
+            try
+            {
+                _sellerService.UpdateSeller(seller);
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch (ApplicationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
