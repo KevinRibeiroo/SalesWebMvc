@@ -7,24 +7,25 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SalesWebMvc.Data;
 using SalesWebMvc.Models;
+using SalesWebMvc.Services;
 
 namespace SalesWebMvc.Controllers
 {
     public class DepartamentsController : Controller
     {
         private readonly SalesWebMvcContext _context;
-
-        public DepartamentsController(SalesWebMvcContext context)
+        private readonly DepartamentService _departamentService;
+        public DepartamentsController(SalesWebMvcContext context, DepartamentService departamentService)
         {
             _context = context;
+            _departamentService = departamentService;
         }
 
         // GET: Departaments
         public async Task<IActionResult> Index()
         {
-              return _context.Departament != null ? 
-                          View(await _context.Departament.ToListAsync()) :
-                          Problem("Entity set 'SalesWebMvcContext.Departament'  is null.");
+            var listDepartaments = _departamentService.GetAllDepartament();
+              return View(listDepartaments);
         }
 
         // GET: Departaments/Details/5
@@ -58,13 +59,8 @@ namespace SalesWebMvc.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Name,Id")] Departament departament)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(departament);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(departament);
+           _departamentService.CreateDepartament(departament);
+            return RedirectToAction(nameof(Index));
         }
 
         // GET: Departaments/Edit/5

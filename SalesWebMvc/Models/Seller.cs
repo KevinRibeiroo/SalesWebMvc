@@ -1,4 +1,6 @@
-﻿namespace SalesWebMvc.Models
+﻿using System.Reflection.Metadata.Ecma335;
+
+namespace SalesWebMvc.Models
 {
     public class Seller
     {
@@ -8,6 +10,7 @@
         public DateTime BirthDate { get; set; }
         public decimal Salario { get; set; }
         public Departament Departament { get; set; }
+        public int DepartamentId { get; set; }
         public ICollection<SalesRecord> SalesRecords { get; set; } = new List<SalesRecord>();
 
         public Seller() 

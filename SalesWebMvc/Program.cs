@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SalesWebMvc.Data;
+using SalesWebMvc.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 //adicionando dependencia no projeto
 builder.Services.AddDbContext<SalesWebMvcContext>(options =>
@@ -12,15 +14,30 @@ builder.Services.AddDbContext<SalesWebMvcContext>(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddScoped<SeedingService>();
+builder.Services.AddScoped<SellerService>();
+builder.Services.AddScoped<DepartamentService>();
+
 var app = builder.Build();
 
+
+if (app.Environment.IsDevelopment())
+{
+    // Chamar o serviço de seeding
+    using (var scope = app.Services.CreateScope())
+    {
+        var seedingService = scope.ServiceProvider.GetRequiredService<SeedingService>();
+        seedingService.Seed();
+    }
+}
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+else 
 {
     //Pagina de erro da aplica��o
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
+    
 }
 
 app.UseHttpsRedirection();
