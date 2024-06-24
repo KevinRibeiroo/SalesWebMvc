@@ -1,4 +1,5 @@
-﻿using SalesWebMvc.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using SalesWebMvc.Data;
 using SalesWebMvc.Models;
 
 namespace SalesWebMvc.Services
@@ -17,14 +18,14 @@ namespace SalesWebMvc.Services
             _context.SaveChanges();
         }
 
-        public List<Departament> GetAllDepartament()
+        public async Task<List<Departament>> GetAllDepartament()
         {
-            return _context.Departament.OrderBy(x => x.Name).ToList();
+            return await _context.Departament.OrderBy(x => x.Name).ToListAsync();
         }
 
-        public Departament GetDepartamentById(int id)
+        public async Task<Departament> GetDepartamentById(int id)
         {
-            return _context.Departament.First(x => x.Id == id);
+            return await _context.Departament.FirstOrDefaultAsync(x => x.Id == id);
         }
     }
 }

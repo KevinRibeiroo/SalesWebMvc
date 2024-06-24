@@ -10,6 +10,7 @@ using SalesWebMvc.Data;
 using SalesWebMvc.Models;
 using SalesWebMvc.Models.viewModels;
 using SalesWebMvc.Services;
+using SalesWebMvc.Services.Exceptions;
 
 namespace SalesWebMvc.Controllers
 {
@@ -24,15 +25,15 @@ namespace SalesWebMvc.Controllers
             _departamentService = departamentService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var allSellers = _sellerService.GetAll();
+            var allSellers = await _sellerService.GetAll();
             return View(allSellers);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            var listDepartament = _departamentService.GetAllDepartament();
+            var listDepartament = await _departamentService.GetAllDepartament();
             var viewModel = new SellerFormViewModel()
             {
                 Departaments = listDepartament
@@ -41,19 +42,26 @@ namespace SalesWebMvc.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public IActionResult Create(Seller seller)
+        public async Task<IActionResult> Create(Seller seller)
         {
-            _sellerService.CreateSeller(seller);
+            if (!ModelState.IsValid)
+            {
+                var departments = await _departamentService.GetAllDepartament();
+                var viewModel = new SellerFormViewModel { Seller = seller, Departaments = departments };
+                return View(viewModel);
+            }
+
+            await _sellerService.CreateSeller(seller);
             return RedirectToAction(nameof(Index));
         }
 
-        public IActionResult Delete(int? id)
+        public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
             {
                 return ValidateIdNotProvided();
             }
-            var seller = _sellerService.GetSellerById(id.Value);
+            var seller = await _sellerService.GetSellerById(id.Value);
 
             if (seller == null)
                 return ValidateIdNotFound();
@@ -62,19 +70,28 @@ namespace SalesWebMvc.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            _sellerService.RemoveSeller(id);
-            return RedirectToAction(nameof(Index));
+            try
+            {
+                await _sellerService.RemoveSeller(id);
+                return RedirectToAction(nameof(Index));
+            }
+            catch (IntegrityException e)
+            {
+                return RedirectToAction(nameof(Error), new { message = e.Message });
+            }
+            
+            
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
             if (id == null)
             {
                 return ValidateIdNotProvided();
             }
-            var seller = _sellerService.GetSellerById(id);
+            var seller = await _sellerService.GetSellerById(id);
 
             if (seller == null)
                 return ValidateIdNotFound();
@@ -82,14 +99,14 @@ namespace SalesWebMvc.Controllers
             return View(seller);
         }
 
-        public IActionResult Edit(int? id)
+        public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
             {
                 return ValidateIdNotProvided();
             }
-            var seller = _sellerService.GetSellerById(id.Value);
-            var listDepartament = _departamentService.GetAllDepartament();
+            var seller = await _sellerService.GetSellerById(id.Value);
+            var listDepartament = await  _departamentService.GetAllDepartament();
             var viewModel = new SellerFormViewModel()
             {
                 Departaments = listDepartament,
@@ -102,8 +119,14 @@ namespace SalesWebMvc.Controllers
             return View(viewModel);
         }
         [HttpPost, ValidateAntiForgeryToken]
-        public IActionResult Edit(Seller seller, int? id)
+        public async Task<IActionResult> Edit(Seller seller, int? id)
         {
+            if (!ModelState.IsValid)
+            {
+                var departments = await _departamentService.GetAllDepartament();
+                var viewModel = new SellerFormViewModel { Seller = seller, Departaments = departments };
+                return View(viewModel);
+            }
 
             if (id != seller.Id)
             {
@@ -112,7 +135,7 @@ namespace SalesWebMvc.Controllers
 
             try
             {
-                _sellerService.UpdateSeller(seller);
+                await _sellerService.UpdateSeller(seller);
 
                 return RedirectToAction(nameof(Index));
             }
